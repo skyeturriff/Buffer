@@ -3,8 +3,16 @@
 int main(int argc, char **argv) {
 	Buffer *ptr_Buffer;   /* pointer to Buffer structure */
 	/*ptr_Buffer = b_create(*argv[1], *argv[2], *argv[3]);*/
-	ptr_Buffer = b_create(SHRT_MAX, 15, 'a');
+	ptr_Buffer = b_create(10, 5, 'm');
 
+	b_addc(ptr_Buffer, 'a');
+	b_addc(ptr_Buffer, 'a');
+	b_addc(ptr_Buffer, 'a');
+	b_addc(ptr_Buffer, 'a');
+	b_addc(ptr_Buffer, 'a');
+	b_addc(ptr_Buffer, 'a');
+	b_addc(ptr_Buffer, 'a');
+	b_addc(ptr_Buffer, 'a');
 	b_addc(ptr_Buffer, 'a');
 	b_addc(ptr_Buffer, 'a');
 	b_addc(ptr_Buffer, 'a');

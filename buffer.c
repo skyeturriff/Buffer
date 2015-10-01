@@ -13,9 +13,8 @@ Buffer* b_create(short init_capacity, char inc_factor, char o_mode) {
 	See C99 Standard 6.3.1.3 */
 	unsigned char uc_inc_factor = inc_factor;
 
-	Buffer* pBD = NULL;	/* Declare pointer to BufferDescriptor struct type */
-
-	switch (o_mode) {	/* Using Svillen's test for valid o_mode */
+	/* Using Svillen's test for valid o_mode */
+	switch (o_mode) {	
 	case 'a': 
 	case 'f': 
 	case 'm':
@@ -31,7 +30,7 @@ Buffer* b_create(short init_capacity, char inc_factor, char o_mode) {
 		return NULL;
 
 	/* All arguments valid. Try to allocate memory for one Buffer structure */
-	pBD = (Buffer *)calloc(1, sizeof(Buffer));
+	Buffer* pBD = (Buffer *)calloc(1, sizeof(Buffer));
 
 	/* Check for successful allocation */
 	if (pBD == NULL)	
@@ -70,19 +69,44 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 	if (pBD == NULL || pBD->cb_head == NULL)
 		return NULL;
 
-	/* If there is room in the buffer, try to add the symbol */
+	/* If there is room, add the symbol and return */
 	if (pBD->addc_offset < pBD->capacity) {
 		pBD->r_flag = 0;
 		pBD->cb_head[pBD->addc_offset++] = symbol;
 		return pBD;
 	}
 
-	/* Buffer is full and cannot be resized when in fixed mode */
-	if (pBD->mode == 0)
+	/* If buffer is full and in fixed mode, or if maximum buffer size has 
+	been reached, return NULL*/
+	if (pBD->mode == 0 || pBD->capacity == MAX_CAPACITY)
 		return NULL;
 
-	/* Buffer is full and in additive mode. Attempt to resize capacity */
+	/* Determine how many bytes (chars) can still be added to the buffer */
+	short availableSpace = MAX_CAPACITY - pBD->capacity;
+
+	/* If in additive mode, and adding inc_factor to current capacity does
+	not exceed max capacity of the buffer, increment current capacity.
+	Else, add bytesBeforeMaxCap to current capacity */
+	if (pBD->mode == 1) {
+		short newCapacity = pBD->capacity + pBD->inc_factor;
+		if (newCapacity > 0 && newCapacity <= availableSpace)
+			pBD->capacity = newCapacity;
+		else {
+			pBD->capacity += availableSpace;
+		}
+	}
 	
+	/* If in multiplicative mode */
+	if (pBD->mode == -1) {
+		short new_increment = availableSpace * pBD->inc_factor / 100;
+		short newCapacity = pBD->capacity + new_increment;
+		if (newCapacity > 0 && newCapacity <= availableSpace)
+			pBD->capacity = newCapacity;
+		else {
+			pBD->capacity += availableSpace;
+		}
+	}
+
 
 }
 

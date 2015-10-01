@@ -27,6 +27,7 @@
 #define R_FAIL_2 -2     /* fail return value */
 #define LOAD_FAIL -2    /* load fail error */
 #define SET_R_FLAG 1    /* realloc flag set value */
+#define MAX_CAPACITY SHRT_MAX /* maximum capacity allowed for character buffer */
 
 
 /* user data type declarations */
