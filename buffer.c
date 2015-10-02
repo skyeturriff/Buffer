@@ -64,7 +64,6 @@ Buffer* b_create(short init_capacity, char inc_factor, char o_mode) {
 }
 
 pBuffer b_addc(pBuffer const pBD, char symbol) {
-
 	/* Check for operational buffer */
 	if (pBD == NULL || pBD->cb_head == NULL)
 		return NULL;
@@ -82,7 +81,7 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 		return NULL;
 
 	/* Calculate new capacity of character buffer */
-	short new_capacity;
+	short new_capacity = 0;
 	if (pBD->mode == 1)
 		new_capacity = pBD->capacity + pBD->inc_factor;
 	if (pBD->mode == -1) {
@@ -91,15 +90,26 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 		new_capacity = pBD->capacity + new_increment;
 	}
 
-	/* If new capacity does not exceed max capacity of the buffer, increment 
-	current capacity. Else, set current capacity to max capacity */
-	if (new_capacity > 0 && new_capacity <= MAX_CAPACITY)	/*may not need to test for <= max*/
-		pBD->capacity = new_capacity;
-	else {
-		pBD->capacity = MAX_CAPACITY;
+	/*NOTE - IF new_capacity is never set... ie if statements are not entered because
+	mode is not reliable... default behaviour will be to set capacity to max size.
+	Maybe, if new_capacity still = 0, return NULL?*/
+
+	/* If new_capacity exceeds max capacity, set to max capacity */
+	if (new_capacity <= 0)				
+		new_capacity = MAX_CAPACITY;
 	
 	/* Attempt to expand character buffer */
-	char* temp_cb_head = (char *)realloc(pBD->cb_head, pBD->capacity);
+	char* temp_cb_head = (char *)realloc(pBD->cb_head, new_capacity);
+	if (temp_cb_head == NULL)
+		return NULL;
+	/* Check if memory location was changed */
+	if (temp_cb_head != pBD->cb_head)
+		pBD->r_flag = SET_R_FLAG;
+	/* Reassign character buffer to point to new memory, and add symbol */		/* Free temp buffer here??? */
+	pBD->cb_head = temp_cb_head;
+	pBD->cb_head[pBD->addc_offset++] = symbol;
+	pBD->capacity = new_capacity;
+	return pBD;
 }
 
 int b_reset(Buffer* const pBD) {

@@ -11,16 +11,11 @@ int main(int argc, char **argv) {
 		b_addc(ptr_Buffer, 'a');
 		i++;
 	}
-
 	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
+	while (i < MAX_CAPACITY){
+		b_addc(ptr_Buffer, 'a');
+		i++;
+	}
 	b_addc(ptr_Buffer, 'a');
 	b_addc(ptr_Buffer, 'a');
 
