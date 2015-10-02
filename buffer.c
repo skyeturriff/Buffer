@@ -81,33 +81,32 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 	if (pBD->mode == 0 || pBD->capacity == MAX_CAPACITY)
 		return NULL;
 
-	/* Determine how many bytes (chars) can still be added to the buffer */
-	short availableSpace = MAX_CAPACITY - pBD->capacity;
-
 	/* If in additive mode, and adding inc_factor to current capacity does
 	not exceed max capacity of the buffer, increment current capacity.
 	Else, add bytesBeforeMaxCap to current capacity */
 	if (pBD->mode == 1) {
-		short newCapacity = pBD->capacity + pBD->inc_factor;
-		if (newCapacity > 0 && newCapacity <= availableSpace)
-			pBD->capacity = newCapacity;
+		short new_capacity = pBD->capacity + pBD->inc_factor;
+		if (new_capacity > 0 && new_capacity <= MAX_CAPACITY)	/*may not need to test for <= max*/
+			pBD->capacity = new_capacity;
 		else {
-			pBD->capacity += availableSpace;
+			pBD->capacity = MAX_CAPACITY;
 		}
 	}
 	
 	/* If in multiplicative mode */
 	if (pBD->mode == -1) {
-		short new_increment = availableSpace * pBD->inc_factor / 100;
-		short newCapacity = pBD->capacity + new_increment;
-		if (newCapacity > 0 && newCapacity <= availableSpace)
-			pBD->capacity = newCapacity;
+		short available_space = MAX_CAPACITY - pBD->capacity;
+		short new_increment = available_space * pBD->inc_factor / 100;
+		short new_capacity = pBD->capacity + new_increment;
+		if (new_capacity > 0 && new_capacity <= MAX_CAPACITY)
+			pBD->capacity = new_capacity;
 		else {
-			pBD->capacity += availableSpace;
+			pBD->capacity = MAX_CAPACITY;
 		}
 	}
-
-
+	
+	pBD->cb_head[pBD->addc_offset++] = symbol;
+	return pBD;
 }
 
 int b_reset(Buffer* const pBD) {

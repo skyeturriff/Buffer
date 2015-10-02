@@ -3,7 +3,14 @@
 int main(int argc, char **argv) {
 	Buffer *ptr_Buffer;   /* pointer to Buffer structure */
 	/*ptr_Buffer = b_create(*argv[1], *argv[2], *argv[3]);*/
-	ptr_Buffer = b_create(10, 5, 'm');
+	ptr_Buffer = b_create(32700, 100, 'a');
+
+	/*loop used to fill character buffer to its capacity*/
+	int i = 0;
+	while (i < 32700){
+		b_addc(ptr_Buffer, 'a');
+		i++;
+	}
 
 	b_addc(ptr_Buffer, 'a');
 	b_addc(ptr_Buffer, 'a');
