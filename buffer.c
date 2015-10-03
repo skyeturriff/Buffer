@@ -105,7 +105,7 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 	/* Check if memory location was changed */
 	if (temp_cb_head != pBD->cb_head)
 		pBD->r_flag = SET_R_FLAG;
-	/* Reassign character buffer to point to new memory, and add symbol */		/* Free temp buffer here??? */
+	/* Reassign character buffer to point to new memory, and add symbol */		/* Free temp buffer here??? Double check addc_offset < capacity??? */
 	pBD->cb_head = temp_cb_head;
 	pBD->cb_head[pBD->addc_offset++] = symbol;
 	pBD->capacity = new_capacity;
@@ -113,18 +113,31 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 }
 
 int b_reset(Buffer* const pBD) {
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
+	pBD->addc_offset = 0;
+	pBD->getc_offset = 0;
+	pBD->mark_offset = 0;
+	pBD->r_flag = 0;
+	pBD->eob = 0;
+
+	return 1;		/*Not sure what to return here*/
 }
 
 void b_destroy(Buffer* const pBD) {
-	free(pBD->cb_head);
-	free(pBD);
+	if (pBD->cb_head != NULL)
+		free(pBD->cb_head);
+	if (pBD != NULL)
+		free(pBD);
 }
 
 int b_isFull(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
-	return pBD->capacity == pBD->addc_offset ? 0 : 1;
+	/* Return 1 if character buffer is full, 0 otherwise */
+	return pBD->capacity == pBD->addc_offset ? 1 : 0;
 }
 
 short b_size(Buffer* const pBD) {
@@ -201,7 +214,12 @@ char b_getc(Buffer* const pBD) {
 }
 
 int b_print(Buffer* const pBD) {
-
+	int i = 0;
+	while (i < pBD->addc_offset) {
+		printf("%c", pBD->cb_head[i]);
+		i++;
+	}
+	printf("\n");
 }
 
 Buffer *b_pack(Buffer* const pBD) {

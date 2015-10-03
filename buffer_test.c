@@ -3,21 +3,44 @@
 int main(int argc, char **argv) {
 	Buffer *ptr_Buffer;   /* pointer to Buffer structure */
 	/*ptr_Buffer = b_create(*argv[1], *argv[2], *argv[3]);*/
-	ptr_Buffer = b_create(32700, 100, 'a');
+	ptr_Buffer = b_create(10, 15, 'a');
 
 	/*loop used to fill character buffer to its capacity*/
 	int i = 0;
-	while (i < 32700){
+	while (i < 10){
 		b_addc(ptr_Buffer, 'a');
 		i++;
 	}
+	//while (i < MAX_CAPACITY){
+	//	b_addc(ptr_Buffer, 'a');
+	//	i++;
+	//}
+	//b_addc(ptr_Buffer, 'a');
+	//b_addc(ptr_Buffer, 'a');
+
+	/*test b_isfull()*/
+	if (b_isFull(ptr_Buffer))
+		printf("Buffer is full\nCapacity: %d addc_offset: %d\n", ptr_Buffer->capacity, ptr_Buffer->addc_offset);
+	else 
+		printf("Buffer is not full\nCapacity: %d addc_offset: %d\n", ptr_Buffer->capacity, ptr_Buffer->addc_offset);
+
+	printf("Adding one more char\n");
 	b_addc(ptr_Buffer, 'a');
-	while (i < MAX_CAPACITY){
-		b_addc(ptr_Buffer, 'a');
-		i++;
-	}
-	b_addc(ptr_Buffer, 'a');
-	b_addc(ptr_Buffer, 'a');
+
+	/*test b_isfull() again*/
+	if (b_isFull(ptr_Buffer))
+		printf("Buffer is full\nCapacity: %d addc_offset: %d\n", ptr_Buffer->capacity, ptr_Buffer->addc_offset);
+	else
+		printf("Buffer is not full\nCapacity: %d addc_offset: %d\n", ptr_Buffer->capacity, ptr_Buffer->addc_offset);
+	
+	/*test b_reset()*/
+	printf("Resetting buffer and adding symbols\n");
+	b_reset(ptr_Buffer);
+	b_addc(ptr_Buffer, 'D'); b_addc(ptr_Buffer, 'D'); b_addc(ptr_Buffer, 'D');
+	printf("Accessing over-written character buffer contents\n");
+	for (i = 0; i < 10; i++)
+		printf("%c", ptr_Buffer->cb_head[i]);
+	printf("\n");
 
 	/*
 	printf("capacity: %d\n", *argv[1]);
@@ -27,8 +50,6 @@ int main(int argc, char **argv) {
 	if (ptr_Buffer == NULL)
 		printf("Could not create buffer\n");
 	else {
-		printf("capacity + inc_factor: %d\n", ptr_Buffer->capacity + ptr_Buffer->inc_factor);
-		printf("capacity + us_inc_factor: %d\n", ptr_Buffer->capacity + (int)ptr_Buffer->inc_factor);
 		printf("\nPrinting buffer parameters:\n\n");
 		printf("The capacity of the buffer is:  %d\n", /*ptr_Buffer->capacity*/ b_capacity(ptr_Buffer));
 		printf("The current size of the buffer is:  %d\n", /*ptr_Buffer->addc_offset*/ b_size(ptr_Buffer));
