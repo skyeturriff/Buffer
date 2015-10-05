@@ -76,7 +76,7 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 	}
 
 	/* If buffer is full and in fixed mode, or if maximum buffer size has 
-	been reached, return NULL*/
+	been reached, return NULL */
 	if (pBD->mode == 0 || pBD->capacity == MAX_CAPACITY)
 		return NULL;
 
@@ -141,111 +141,170 @@ int b_isFull(Buffer* const pBD) {
 }
 
 short b_size(Buffer* const pBD) {
-	/*Check fro run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->addc_offset;
 }
 
 short b_capacity(Buffer* const pBD) {
-	/*Check for run-time errors. If an erro occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 		
 	return pBD->capacity;
 }
 
 char* b_setmark(Buffer* const pBD, short mark) {
-	/*If funtion cannot complete task (run-time error), RETURN NULL*/
-
-	if (0 <= mark && mark <= pBD->addc_offset){
-		pBD->mark_offset = mark;
-		return &(pBD->cb_head[pBD->mark_offset]);
-	}
-	else
+	/* Check for operational buffer and valid mark */
+	if (pBD == NULL || mark < 0 || mark > pBD->addc_offset) 
 		return NULL;
+
+	pBD->mark_offset = mark;
+	return &(pBD->cb_head[pBD->mark_offset]);
 }
 
 short b_mark(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->mark_offset;
 }
 
 int b_mode(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, notify the calling function of the error*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->mode;
 }
 
 size_t b_inc_factor(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN 256*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_256;
 
 	return (unsigned char)pBD->inc_factor; /*Return NON_NEGATIVE VALUE of inc_factor*/
 }
 
 int b_load(FILE* const fi, Buffer* const pBD) {
-	return R_FAIL_1;
+	/* Check for operational buffer and file */
+	if (pBD == NULL || fi == NULL)
+		return R_FAIL_1;
+
+	int numAdded = 0;
+	int ch = fgetc(fi);
+	while (!feof(fi)){
+		if (!b_addc(pBD, ch))
+			return LOAD_FAIL;
+		numAdded++;
+		ch = fgetc(fi);
+	}
+
+	return numAdded;
 }
 
 int b_isempty(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->addc_offset == 0 ? 1 : 0;
 }
 
 int b_eob(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->eob;
 }
 
 char b_getc(Buffer* const pBD) {
-	/*Check argument for validity (possible run-time error). 
-	If invalid, RETURN -2*/
+	/* Check for operational buffer */
+	if (pBD == NULL || pBD->cb_head == NULL) 
+		return R_FAIL_2;
 
 	if (pBD->getc_offset == pBD->addc_offset) {
-		pBD->eob = 1;
-		return -1;
+		pBD->eob = SET_R_FLAG;
+		return R_FAIL_1;
 	}
-	else {
-		pBD->eob = 0;
-		char ch = pBD->cb_head[pBD->getc_offset];
-		pBD->getc_offset++;
-		return ch;
-	}
+
+	pBD->eob = 0;
+	return pBD->cb_head[pBD->getc_offset++];
 }
 
 int b_print(Buffer* const pBD) {
-	int i = 0;
-	while (i < pBD->addc_offset) {
-		printf("%c", pBD->cb_head[i]);
-		i++;
+	/* Check for operational buffer */
+	if (pBD == NULL || pBD->cb_head == NULL) 
+		return R_FAIL_1;
+
+	int numChars = 0;
+	if (pBD->addc_offset == 0)
+		printf("The buffer is empty.\n");
+	else {
+		pBD->getc_offset = 0;
+		char ch = b_getc(pBD);
+		while (!b_eob(pBD)){
+			printf("%c", ch);
+			numChars++;
+			ch = b_getc(pBD);
+		}
+		pBD->getc_offset = 0;
+		pBD->eob = 0;
+		printf("\n");
 	}
-	printf("\n");
+
+	return numChars;
 }
 
 Buffer *b_pack(Buffer* const pBD) {
+	/* Check for operational buffer */
+	if (pBD == NULL || pBD->cb_head == NULL)
+		return NULL;
+
+	/* Check for valid new capacity */
+	short new_capacity = (pBD->addc_offset + 1)*sizeof(char);
+	if (new_capacity <= 0)
+		return NULL;
 	
+	/* Try to allocate space */
+	char* tempB = (char *)realloc(pBD->cb_head, new_capacity);
+	if (tempB == NULL)
+		return NULL;
+
+	/* Check if location in memory has changed */
+	if (tempB != pBD->cb_head) {
+		pBD->r_flag = SET_R_FLAG;
+		free(pBD->cb_head);
+		pBD->cb_head = tempB;
+	}
+
+	tempB = NULL;
+	pBD->capacity = new_capacity;
+	return pBD;
 }
 
 char b_rflag(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->r_flag;
 }
 
 short b_retract(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer and positive getc_offset */
+	if (pBD == NULL || pBD->getc_offset <= 0) 
+		return R_FAIL_1;
 
 	return --(pBD->getc_offset);
 }
 
 short b_retract_to_mark(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->getc_offset = pBD->mark_offset;
 }
 
 short b_getc_offset(Buffer* const pBD) {
-	/*Check for run-time errors. If an error occurs, RETURN -1*/
+	/* Check for operational buffer */
+	if (pBD == NULL) return R_FAIL_1;
 
 	return pBD->getc_offset;
 }

@@ -25,6 +25,7 @@
 /* You may add your own constant definitions here */
 #define R_FAIL_1 -1		/* fail return value */
 #define R_FAIL_2 -2     /* fail return value */
+#define R_FAIL_256 256	/* fail return value */
 #define LOAD_FAIL -2    /* load fail error */
 #define SET_R_FLAG 1    /* realloc flag set value */
 #define MAX_CAPACITY SHRT_MAX /* maximum capacity allowed for character buffer */
@@ -66,6 +67,6 @@ Buffer *b_pack(Buffer* const);
 char b_rflag(Buffer* const);
 short b_retract(Buffer* const);
 short b_retract_to_mark(Buffer* const);
-short b_get_offset(Buffer* const);
+short b_getc_offset(Buffer* const);
 
 #endif
