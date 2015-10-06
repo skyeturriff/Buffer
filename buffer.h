@@ -1,14 +1,21 @@
-/* REPLACE the header below with your file header (see CST8152_ASSAMG.pdf for details).
-* File Name: buffer.h
-* Version: 1.15.2
-* Author: S^R
-* Date: 8 September 2015
-* Preprocessor directives, type declarations and prototypes necessary for buffer implementation
-* as required for CST8152, Assignment #1, Fall 2015.
-* The file is not completed.
-* You must add your function declarations (prototypes).
-* You must also add your constant definitions and macros,if any.
-*/
+/*******************************************************************************
+* File Name:		buffer.h
+* Compiler:			MS Visual Studio 2013
+* Author:			S^R
+* Course:			CST 8152 - Compilers, Lab Section:	011 
+* Assignment:		1
+* Date:				5 October 2015
+* Professor:		Sv. Ranev
+* Purpose:			Preprocessor directives, type declarations and prototypes 
+*					necessary for buffer implementation as required for CST8152, 
+*					Assignment #1, Fall 2015.
+* Function list:	b_create(), b_addc(), b_reset(), b_destroy(), b_isFull(),
+*					b_size(), b_capacity(), b_setmark(), b_mark(), b_mode(),
+*					b_inc_factor(), b_load(), b_isempty(), b_eob(), b_getc(),
+*					b_print(), b_pack(), b_rflag(), b_retract(),
+*					b_retract_to_mark(), b_getc_offset()	
+*******************************************************************************/
+
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
@@ -22,13 +29,16 @@
 #include <limits.h>		/* implementation-defined data type ranges and limits */
 
 /* constant definitions */
-/* You may add your own constant definitions here */
-#define R_FAIL_1 -1		/* fail return value */
-#define R_FAIL_2 -2     /* fail return value */
-#define R_FAIL_256 256	/* fail return value */
-#define LOAD_FAIL -2    /* load fail error */
-#define SET_R_FLAG 1    /* realloc flag set value */
-#define MAX_CAPACITY SHRT_MAX /* maximum capacity allowed for character buffer */
+#define SUCCESS 1				/* success return value */
+#define R_FAIL_1 -1				/* fail return value */
+#define R_FAIL_2 -2				/* fail return value */
+#define R_FAIL_256 256			/* fail return value */
+#define LOAD_FAIL -2			/* load fail error */
+#define SET_R_FLAG 1			/* realloc flag set value */
+#define MAX_CAPACITY SHRT_MAX	/* max size allowed for character buffer */
+#define FIXED 0					/* fixed buffer mode */
+#define ADDITIVE 1				/* additive buffer mode */
+#define MULTIPLICATIVE -1		/* multiplicative buffer mode */
 
 
 /* user data type declarations */
