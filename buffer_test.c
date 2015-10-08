@@ -1,3 +1,17 @@
+/*******************************************************************************
+* File Name:		buffer_test.c
+* Compiler:			MS Visual Studio 2013
+* Author:			Skye Turriff, using code from platy_bt.c written by Sv. Ranev
+* Course:			CST 8152 - Compilers, Lab Section:	011
+* Assignment:		1
+* Date:				5 October 2015
+* Professor:		Sv. Ranev
+* Purpose:			To test various functions implemented in buffer.c
+* Function list:	b_create(), b_addc(), printf(), b_capacity(), b_size(), 
+*					b_getc_offset(), b_mode(), b_inc_factor(), b_mark(), 
+*					b_print(), b_pack(), b_isFull(), b_set_mark() 
+*******************************************************************************/
+
 #include "buffer.h"
 
 int main(int argc, char **argv) {

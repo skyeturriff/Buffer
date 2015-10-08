@@ -45,9 +45,10 @@ Buffer* b_create(short init_capacity, char inc_factor, char o_mode) {
 	unsigned char uc_inc_factor = inc_factor;
 
 	/* Test for invalid parameters. */
-	if (init_capacity <= 0 ||
+	if (init_capacity < 0 ||
 		(o_mode != 'a' && o_mode != 'f' && o_mode != 'm') ||
-		((o_mode == 'm') && (uc_inc_factor > 100)))	
+		((o_mode == 'm') && (uc_inc_factor > 100))	||
+		((o_mode == 'f') && (init_capacity == 0)))
 		return NULL;
 
 	/* Try to allocate memory for one Buffer structure */
@@ -107,7 +108,7 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 		return NULL;
 
 	/* If there is room, add the symbol and return */
-	if ((pBD->addc_offset*sizeof(char)) < pBD->capacity) {
+	if (pBD->addc_offset < pBD->capacity) {
 		pBD->r_flag = 0;
 		pBD->cb_head[pBD->addc_offset++] = symbol;
 		return pBD;
@@ -121,16 +122,18 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 	short new_capacity = 0;
 	if (pBD->mode == ADDITIVE)
 		new_capacity = pBD->capacity + (unsigned char)pBD->inc_factor;
-	if (pBD->mode == MULTIPLICATIVE) {
+	else if (pBD->mode == MULTIPLICATIVE) {
 		short available_space = MAX_CAPACITY - pBD->capacity;
-		short new_increment = available_space * pBD->inc_factor / 100;
-		new_capacity = pBD->capacity + new_increment;
+		double new_increment = (double)available_space * (double)((unsigned char)pBD->inc_factor) / 100.00;
+		if (new_increment < 1)	/* Cannot add less than one byte */
+			new_increment = 1;
+		new_capacity = pBD->capacity + (short)new_increment;
 	}
+	else    /* Buffer mode error */
+		return NULL;
 
 	/* If new_capacity exceeds max capacity, set to max capacity */
-	if (new_capacity == 0)
-		return NULL;
-	//if (new_capacity <= 0)				
+	//if (new_capacity < 0)
 	//	new_capacity = MAX_CAPACITY;
 	
 	/* Attempt to expand character buffer */
@@ -314,13 +317,25 @@ size_t b_inc_factor(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Loads an input file into the character buffer.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
-* Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Called functions:	fgetc(), feof(), b_addc()
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer with a valid
+*					character buffer cb_head
+*					A constant pointer to an open input file, fi
+* Return value:		On success, returns numAdded, the number of symbols added to 
+*					the character buffer as an int. Otherwise, returns -1 on bad
+*					parameters, or -2 if symbol could not be added to buffer.
+* Algorithm:		Read a character from the file, check that program has not
+*					tried to read past the end of the file. If it has, exit the
+*					loop and return numAdded. Else, attempt to add the symbol to
+*					the character buffer. If add was unsuccessful, return -2.
+*					Else, continue to read another character from the file.
+*Warnings:			This function produces the following warning: "conversion
+*					from int to char, possible loss of data". This is because 
+*					fgetc() returns an unsigned char cast as an int, which is 
+*					then passed to b_addc(), which accepts it as a char.
 *******************************************************************************/
 int b_load(FILE* const fi, Buffer* const pBD) {
 	/* Check for operational buffer and file */
@@ -330,7 +345,7 @@ int b_load(FILE* const fi, Buffer* const pBD) {
 	int numAdded = 0;
 	int ch = fgetc(fi);
 	while (!feof(fi)){
-		if (!b_addc(pBD, ch))
+		if (!b_addc(pBD, (char)ch))	/* Produces warning - see note above */
 			return LOAD_FAIL;
 		numAdded++;
 		ch = fgetc(fi);
@@ -340,29 +355,31 @@ int b_load(FILE* const fi, Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Determines if the character buffer is empty (appears to not
+*					be holding any characters).
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
 * Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer
+* Return value:		integer 1 if buffer is empty, 0 if not empty, or -1 on bad
+*					parameters.
 *******************************************************************************/
 int b_isempty(Buffer* const pBD) {
 	/* Check for operational buffer */
 	if (pBD == NULL) return R_FAIL_1;
 
-	return pBD->addc_offset == 0 ? 1 : 0;
+	return pBD->addc_offset == 0 ? EMPTY : NOT_EMPTY;
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Returns the value of the end of buffer flag.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
 * Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer
+* Return value:		integer 1 if the end of the character buffer has been
+*					reached, 0 if it has not been reached, or -1 on bad
+*					parameters.
 *******************************************************************************/
 int b_eob(Buffer* const pBD) {
 	/* Check for operational buffer */
@@ -372,13 +389,15 @@ int b_eob(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Returns the character located at getc_offset in the buffer.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
 * Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer with a valid
+*					character buffer cb_head
+* Return value:		If successful, the char located at getc_offset in the buffer.
+*					Otherwise, -2 on bad parameters, or -1 if the end of the
+*					buffer has been reached (no more characters).
 *******************************************************************************/
 char b_getc(Buffer* const pBD) {
 	/* Check for operational buffer */
@@ -386,7 +405,7 @@ char b_getc(Buffer* const pBD) {
 		return R_FAIL_2;
 
 	if (pBD->getc_offset == pBD->addc_offset) {
-		pBD->eob = SET_R_FLAG;
+		pBD->eob = SET_EOB_FLAG;
 		return R_FAIL_1;
 	}
 
@@ -395,13 +414,17 @@ char b_getc(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Prints the contents of the character buffer to standard
+*					output.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
-* Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Called functions:	b_getc(), b_eob()
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer with a valid
+*					character buffer cb_head
+* Return value:		On success, the number of characters printed. Otherwise, -1.
+* Algorithm:		Check if the buffer is empty. If not, get the first char.
+*					While function has not read to the end of the buffer, print
+*					the char, get the next char, and repeat.
 *******************************************************************************/
 int b_print(Buffer* const pBD) {
 	/* Check for operational buffer */
@@ -428,13 +451,18 @@ int b_print(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			If possible, shrinks or expands the buffer capacity to the
+*					buffer's current size (in number of chars) plus 1.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
-* Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Called functions:	realloc()
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer
+* Return value:		On success, a pointer to Buffer, else NULL.
+* Algorithm:		Calculate the value of the new capacity. If new value is not
+*					valid, return NULL. If valid, try to allocate space for a 
+*					buffer with new capacity. If not successful, return NULL.
+*					Else, check for a change in memory location and return 
+*					pointer to new buffer with members set.
 *******************************************************************************/
 Buffer *b_pack(Buffer* const pBD) {
 	/* Check for operational buffer */
@@ -463,13 +491,13 @@ Buffer *b_pack(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Returns the value of buffer reallocation flag.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
 * Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer
+* Return value:		If the memory location of the character buffer has changed, 
+*					integer 1, 0 if it has not changed. Returns -1 on error.
 *******************************************************************************/
 char b_rflag(Buffer* const pBD) {
 	/* Check for operational buffer */
@@ -479,13 +507,13 @@ char b_rflag(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Decrements the value of getc_offset by one.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
 * Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer
+* Return value:		On success, the new value of getc_offset as a short. Else,
+*					returns -1.
 *******************************************************************************/
 short b_retract(Buffer* const pBD) {
 	/* Check for operational buffer and positive getc_offset */
@@ -496,13 +524,12 @@ short b_retract(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Sets getc_offset to the current value of mark_offset.
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
 * Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer
+* Return value:		On success, the new value of getc_offset as a short, else -1
 *******************************************************************************/
 short b_retract_to_mark(Buffer* const pBD) {
 	/* Check for operational buffer */
@@ -512,13 +539,13 @@ short b_retract_to_mark(Buffer* const pBD) {
 }
 
 /*******************************************************************************
-* Purpose:
+* Purpose:			Returns the value of getc_offset (offset in chars from the 
+*					beginning of the character buffer).
 * Author:			Skye Turriff
 * History:			Version 1, October 5, 2015
 * Called functions:	None
-* Parameters:
-* Return value:
-* Algorithm:
+* Parameters:		A constant pointer to a valid (non-NULL) Buffer
+* Return value:		On success, getc_offset as a short, -1 otherwise.
 *******************************************************************************/
 short b_getc_offset(Buffer* const pBD) {
 	/* Check for operational buffer */

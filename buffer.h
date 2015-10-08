@@ -35,10 +35,13 @@
 #define R_FAIL_256 256			/* fail return value */
 #define LOAD_FAIL -2			/* load fail error */
 #define SET_R_FLAG 1			/* realloc flag set value */
+#define SET_EOB_FLAG 1			/* end of buffer flag set value */
 #define MAX_CAPACITY SHRT_MAX	/* max size allowed for character buffer */
 #define FIXED 0					/* fixed buffer mode */
 #define ADDITIVE 1				/* additive buffer mode */
 #define MULTIPLICATIVE -1		/* multiplicative buffer mode */
+#define EMPTY 1					/* buffer empty indicator */
+#define NOT_EMPTY 0				/* buffer not empty indicator */
 
 
 /* user data type declarations */
@@ -57,26 +60,26 @@ typedef struct BufferDescriptor {
 /*typedef Buffer *pBuffer;*/
 
 /* function declarations */
-Buffer* b_create(short, char, char);
-pBuffer b_addc(pBuffer const, char);
-int b_reset(Buffer* const);
-void b_destroy(Buffer* const);
-int b_isFull(Buffer* const);
-short b_size(Buffer* const);
-short b_capacity(Buffer* const);
-char* b_setmark(Buffer* const, short);
-short b_mark(Buffer* const);
-int b_mode(Buffer* const);
-size_t b_inc_factor(Buffer* const);
-int b_load(FILE* const, Buffer* const);
-int b_isempty(Buffer* const);
-int b_eob(Buffer* const);
-char b_getc(Buffer* const);
-int b_print(Buffer* const);
-Buffer *b_pack(Buffer* const);
-char b_rflag(Buffer* const);
-short b_retract(Buffer* const);
-short b_retract_to_mark(Buffer* const);
-short b_getc_offset(Buffer* const);
+Buffer* b_create(short, char, char);	/* Creates BufferDescriptor */
+pBuffer b_addc(pBuffer const, char);	/* Add char to buffer */
+int b_reset(Buffer* const);				/* Reset buffer to appear empty */
+void b_destroy(Buffer* const);			/* Free memory for buffer */
+int b_isFull(Buffer* const);			/* Check if buffer is full */
+short b_size(Buffer* const);			/* Get size of buffer */
+short b_capacity(Buffer* const);		/* Get capacity of buffer */
+char* b_setmark(Buffer* const, short);	/* Set mark location */
+short b_mark(Buffer* const);			/* Get mark location value */
+int b_mode(Buffer* const);				/* Get buffer operational mode*/
+size_t b_inc_factor(Buffer* const);		/* Get increment factor of buffer */
+int b_load(FILE* const, Buffer* const);	/* Load file into buffer */
+int b_isempty(Buffer* const);			/* Check if buffer is empty */
+int b_eob(Buffer* const);				/* Check if end of buffer reached */
+char b_getc(Buffer* const);				/* Check char from buffer */
+int b_print(Buffer* const);				/* Print buffer contents */
+Buffer *b_pack(Buffer* const);			/* Pack buffer to current size+1 */
+char b_rflag(Buffer* const);			/* Set reallocation flag */
+short b_retract(Buffer* const);			/* Decrement getc_offset */
+short b_retract_to_mark(Buffer* const);	/* Set getc_offset to mark_offset */
+short b_getc_offset(Buffer* const);		/* Get getc_offset location */
 
 #endif
