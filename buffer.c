@@ -62,9 +62,11 @@ Buffer* b_create(short init_capacity, char inc_factor, char o_mode) {
 	pBD->cb_head = (char *)malloc(init_capacity);
 
 	/* Check for successful allocation */
-	if (pBD->cb_head == NULL)	
+	if (pBD->cb_head == NULL) {
+		free(pBD);	/* Release memory just allocated for Buffer struct */
 		return NULL;
-	
+	}
+		
 	/* Set buffer operational mode and increment factor */
 	if (uc_inc_factor == 0 || o_mode == 'f') {
 		pBD->mode = FIXED;
@@ -108,7 +110,7 @@ pBuffer b_addc(pBuffer const pBD, char symbol) {
 		return NULL;
 
 	/* If there is room, add the symbol and return */
-	if (pBD->addc_offset < pBD->capacity) {
+	if (pBD->addc_offset*sizeof(char) < pBD->capacity) {
 		pBD->r_flag = 0;
 		pBD->cb_head[pBD->addc_offset++] = symbol;
 		return pBD;
@@ -187,10 +189,10 @@ int b_reset(Buffer* const pBD) {
 *					the same for the Buffer struct.
 *******************************************************************************/
 void b_destroy(Buffer* const pBD) {
-	if (pBD->cb_head != NULL)
+	if (pBD != NULL) {
 		free(pBD->cb_head);
-	if (pBD != NULL)
 		free(pBD);
+	}
 }
 
 /*******************************************************************************
@@ -208,7 +210,7 @@ int b_isFull(Buffer* const pBD) {
 	if (pBD == NULL) return R_FAIL_1;
 
 	/* Return 1 if character buffer is full, 0 otherwise */
-	return pBD->capacity == pBD->addc_offset ? 1 : 0;
+	return pBD->capacity == pBD->addc_offset*sizeof(char) ? 1 : 0;
 }
 
 /*******************************************************************************
@@ -262,7 +264,7 @@ char* b_setmark(Buffer* const pBD, short mark) {
 		return NULL;
 
 	pBD->mark_offset = mark;
-	return &(pBD->cb_head[pBD->mark_offset]);
+	return pBD->cb_head+mark;
 }
 
 /*******************************************************************************
@@ -468,6 +470,8 @@ Buffer *b_pack(Buffer* const pBD) {
 	/* Check for operational buffer */
 	if (pBD == NULL || pBD->cb_head == NULL)
 		return NULL;
+
+	pBD->r_flag = 0;
 
 	/* Check for valid new capacity */
 	short new_capacity = (pBD->addc_offset + 1)*sizeof(char);
